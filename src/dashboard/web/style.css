@@ -23758,6 +23758,20 @@ dialog select[multiple]:hover:not(:disabled) {
   box-shadow: none;
 }
 
+.bot-defaults-page .bd-runtime-mode[data-has-legacy] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 480px) {
+  .bot-defaults-page .bd-runtime-mode[data-has-legacy] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bot-defaults-page .bd-runtime-mode[data-has-legacy] > button[data-action="runtime-legacy"] {
+    grid-column: 1 / -1;
+  }
+}
+
 .bot-defaults-page .bd-runtime-mode > button[aria-pressed="true"] {
   border-color: color-mix(in srgb, var(--accent) 46%, var(--border-soft));
   background: var(--surface);

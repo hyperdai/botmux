@@ -1438,10 +1438,20 @@ describe('Codex-compatible runtime editor', () => {
         model: 'old-model',
       }, patchBot);
       expect(root.findByProps({ 'data-input': 'agentRuntimeMode' }).props.value).toBe('legacy');
+      expect(root.findByProps({ 'data-action': 'runtime-legacy' }).props['aria-pressed']).toBe(true);
+      expect(root.findByProps({ 'data-action': 'runtime-official' }).props['aria-pressed']).toBe(false);
+      expect(root.findByProps({ 'data-action': 'runtime-custom' }).props['aria-pressed']).toBe(false);
       expect(root.findByProps({ 'data-runtime-legacy': '' })).toBeTruthy();
       const legacyInput = root.findByProps({ 'data-input': 'agentRuntimeLegacyPath' });
       expect(legacyInput.props.value).toBe(legacyPath);
       expect(legacyInput.props.readOnly).toBe(true);
+
+      for (const action of ['runtime-official', 'runtime-custom']) {
+        act(() => root.findByProps({ 'data-action': action }).props.onClick());
+        expect(root.findByProps({ 'data-action': 'runtime-legacy' }).props['aria-pressed']).toBe(false);
+        act(() => root.findByProps({ 'data-action': 'runtime-legacy' }).props.onClick());
+        expect(root.findByProps({ 'data-action': 'runtime-legacy' }).props['aria-pressed']).toBe(true);
+      }
 
       act(() => root.findByProps({ 'data-input': 'agentModel' }).props.onChange({ currentTarget: { value: 'new-model' } }));
       await act(async () => {
@@ -1457,6 +1467,17 @@ describe('Codex-compatible runtime editor', () => {
       }));
     } finally {
       (globalThis as any).fetch = previousFetch;
+    }
+  });
+
+  it('does not offer a legacy choice for official or structured runtimes', () => {
+    for (const runtime of [
+      {},
+      { cliRuntime: { id: 'custom-codex', executable: '/opt/custom-codex' }, cliPathOverride: '/opt/custom-codex' },
+    ]) {
+      const { renderer, root } = renderAgent({ cliId: 'codex', ...runtime });
+      expect(root.findAllByProps({ 'data-action': 'runtime-legacy' })).toHaveLength(0);
+      act(() => renderer.unmount());
     }
   });
 

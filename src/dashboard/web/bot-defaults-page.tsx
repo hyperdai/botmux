@@ -2374,6 +2374,7 @@ export function BotAgentSection(props: {
   const { bot, cliState, patchBot } = props;
   const initialKey = agentSelectionKey(bot, props.sessionFallback);
   const runtimeConfigKey = JSON.stringify([bot.cliRuntime ?? null, bot.cliPathOverride ?? null]);
+  const hasLegacyRuntime = !bot.cliRuntime && !!bot.cliPathOverride?.trim();
   const autoConfigKey = JSON.stringify(bot.traexAutoModel ?? null);
   const initialAutoDraft = useRef(selectedAgentCliId(initialKey) === 'traex'
     ? readAutoModelDraft(bot.larkAppId) : undefined);
@@ -2626,7 +2627,8 @@ export function BotAgentSection(props: {
 
   function updateRuntimeMode(mode: RuntimeMode): void {
     setRuntimeDraft(current => ({ ...current, mode }));
-    setRuntimeTouched(true);
+    // 返回原有入口只撤销迁移选择，保存模型时仍保留旧配置。
+    setRuntimeTouched(mode !== 'legacy');
     setRuntimeStatus(null);
     setAgentStatus(null);
   }
@@ -3111,7 +3113,18 @@ export function BotAgentSection(props: {
           <div className="bd-runtime-heading">
             <FieldTitle help={tr('botDefaults.runtimeHelp')}>{tr('botDefaults.runtimeTitle')}</FieldTitle>
           </div>
-          <div className="bd-runtime-mode" role="group" aria-label={tr('botDefaults.runtimeTitle')}>
+          <div className="bd-runtime-mode" data-has-legacy={hasLegacyRuntime ? '' : undefined} role="group" aria-label={tr('botDefaults.runtimeTitle')}>
+            {hasLegacyRuntime ? (
+              <button
+                type="button"
+                data-action="runtime-legacy"
+                aria-pressed={runtimeDraft.mode === 'legacy'}
+                disabled={agentBusy}
+                onClick={() => updateRuntimeMode('legacy')}
+              >
+                {tr('botDefaults.runtimeLegacyCurrent')}
+              </button>
+            ) : null}
             <button
               type="button"
               data-action="runtime-official"
